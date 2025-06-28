@@ -2,6 +2,7 @@ package com.baccaro.lucas.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.baccaro.lucas.IosInterviewWebRTCClient
 import com.baccaro.lucas.conversation.presentation.FullServerEvent
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionRecordPermissionDenied

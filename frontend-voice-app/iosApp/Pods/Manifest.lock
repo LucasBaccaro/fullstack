@@ -1,0 +1,23 @@
+PODS:
+  - composeApp (1.0):
+    - WebRTC
+  - WebRTC (63.11.20455)
+
+DEPENDENCIES:
+  - composeApp (from `../composeApp`)
+
+SPEC REPOS:
+  trunk:
+    - WebRTC
+
+EXTERNAL SOURCES:
+  composeApp:
+    :path: "../composeApp"
+
+SPEC CHECKSUMS:
+  composeApp: bbe690729b79156b706a54a91ca3f48f69cb34b1
+  WebRTC: f2a6203584745fe53532633397557876b5d71640
+
+PODFILE CHECKSUM: a14d0f57868998c5d5490e2bb91eebe03875e53e
+
+COCOAPODS: 1.16.2
