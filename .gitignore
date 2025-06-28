@@ -1,0 +1,19 @@
+
+# Python backend
+/backend-voice-app/env/
+/backend-voice-app/.env
+/backend-voice-app/app/__pycache__/
+/backend-voice-app/app/core/__pycache__/
+/backend-voice-app/app/models/__pycache__/
+/backend-voice-app/app/routers/__pycache__/
+*.pyc
+
+# Kotlin frontend
+/frontend-voice-app/.gradle/
+/frontend-voice-app/.idea/
+/frontend-voice-app/build/
+/frontend-voice-app/composeApp/build/
+/frontend-voice-app/local.properties
+
+# macOS
+.DS_Store
