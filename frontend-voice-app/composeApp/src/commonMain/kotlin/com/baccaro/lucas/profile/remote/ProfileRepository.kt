@@ -4,6 +4,8 @@ import com.baccaro.lucas.core.ApiResult
 import com.baccaro.lucas.profile.domain.Profile
 import com.russhwolf.settings.Settings
 
+import com.baccaro.lucas.progress.model.ProgressReport
+
 class ProfileRepository(
     private val profileService: ProfileService,
     private val settings: Settings
@@ -18,5 +20,10 @@ class ProfileRepository(
     suspend fun updateProfile(profile: Profile): ApiResult<Profile> {
         val token = getToken() ?: return ApiResult.error(401, "No autenticado")
         return profileService.updateProfile(token, profile)
+    }
+
+    suspend fun getProgressHistory(): ApiResult<List<ProgressReport>> {
+        val token = getToken() ?: return ApiResult.error(401, "No autenticado")
+        return profileService.getProgressHistory(token)
     }
 }

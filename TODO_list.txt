@@ -1,0 +1,80 @@
+¡Hola! He revisado a fondo el código de tus proyectos `backend-voice-app` y `frontend-voice-app`. En general, tienes una base muy sólida y funcional. ¡Buen trabajo!
+
+Como me pediste, he preparado una lista de puntos a mejorar para llevar la app al siguiente nivel de calidad, robustez y mantenibilidad, asegurando que haya una filosofía de desarrollo consistente en todo el stack.
+
+---
+### **TODO List - Mejoras de Arquitectura y Código**
+---
+
+#### **A. Mejoras Generales y de Alto Nivel (Críticas)**
+
+1.  **[CRÍTICO] Eliminar URLs Hardcodeadas:**
+    *   **Ubicación:** `frontend-voice-app/.../core/KtorApi.kt`
+    *   **Problema:** La URL base de la API (`https://...ngrok-free.app/`) está quemada en el código. Esto es muy frágil y problemático para cambiar entre entornos (desarrollo, producción).
+    *   **Solución:** Externaliza la URL. Utiliza `buildkonfig` en KMP o un mecanismo similar para inyectar la URL base según el `build type` (debug/release).
+
+2.  **Consistencia en el Idioma (API y Modelos):**
+    *   **Problema:** La API devuelve mensajes de error en español (ej: "Un usuario con este correo ya existe"), pero la documentación en `README.md` está en inglés. Los modelos Pydantic en el backend tienen descripciones en español.
+    *   **Solución:** Define un único idioma para la comunicación de la API (mensajes, errores, logs). Generalmente, se prefiere el inglés para mantener la consistencia con las convenciones de código, pero lo importante es elegir uno y mantenerlo.
+
+#### **B. Mejoras en el Backend (FastAPI)**
+
+1.  **Abstraer la Lógica de Negocio de los Routers:**
+    *   **Problema:** Los routers (`auth.py`, `topics.py`, etc.) contienen lógica de negocio y llamadas directas a Supabase. Esto mezcla la capa de presentación (API endpoints) con la de acceso a datos.
+    *   **Solución:** Crea una capa de "Servicios" o "Repositorios" en el backend. Por ejemplo, un `AuthService` que contenga la lógica de `sign_up` y `sign_in`. El router solo debería encargarse de recibir la petición, llamar al servicio y devolver la respuesta. Esto mejora la testeabilidad y la organización.
+
+2.  **Manejo de Errores más Robusto:**
+    *   **Ubicación:** `routers/auth.py`, `routers/topics.py`
+    *   **Problema:** El manejo de errores se basa en analizar strings de mensajes de excepción (ej: `if "User already registered" in e.message:`). Esto es muy frágil; si Supabase cambia el mensaje, la lógica se rompe.
+    *   **Solución:** Basa el manejo de errores en códigos de error o tipos de excepción específicos que `gotrue-py` o `postgrest-py` puedan proporcionar. Evita usar `except Exception:` tan a menudo; captura excepciones más específicas (`APIError`, `AuthApiError`) para dar respuestas más precisas.
+
+3.  **Consistencia en las Respuestas de la API:**
+    *   **Ubicación:** `routers/openai.py`
+    *   **Problema:** El endpoint `/openai/ephemeral-key` devuelve un diccionario JSON (`{"success": True, ...}`) mientras que el resto de la API utiliza modelos de Pydantic para definir las respuestas.
+    *   **Solución:** Crea modelos de Pydantic también para esta respuesta (`EphemeralKeyResponse`, `ErrorResponse`). Esto mantiene la consistencia, la validación automática y la documentación de OpenAPI.
+
+4.  **Externalizar Constantes Grandes:**
+    *   **Ubicación:** `routers/openai.py`
+    *   **Problema:** El `GENERAL_INSTRUCTIONS` y la definición de `TOOLS` son bloques de texto y estructuras de datos enormes dentro del código Python. Esto lo hace difícil de leer y mantener.
+    *   **Solución:** Carga estas constantes desde archivos externos (ej: `instructions.txt`, `tools.json`). Esto mantiene el código Python limpio y permite modificar los prompts o herramientas sin tocar la lógica.
+
+5.  **Estandarizar el uso de Pydantic:**
+    *   **Problema:** Se mezclan estilos de configuración de Pydantic v1 (`ConfigDict(from_attributes=True)`) y v2 (`model_config = ...`).
+    *   **Solución:** Actualiza todos los modelos para usar consistentemente la sintaxis de Pydantic v2 (`model_config`) para mayor claridad.
+
+#### **C. Mejoras en el Frontend (Kotlin Multiplatform)**
+
+1.  **Centralizar la Paleta de Colores en el Tema:**
+    *   **Ubicación:** `LoginScreen.kt`, `SignUpScreen.kt`, `HomeScreen.kt`, etc.
+    *   **Problema:** Se usan colores hardcodeados en toda la UI (ej: `Color(0xFFF6F4F9)`, `Color(0xFF7B5EA7)`).
+    *   **Solución:** Define estos colores en tu `MaterialTheme` (en un archivo `Theme.kt` o `Color.kt`). Esto permite cambiar el tema de la aplicación fácilmente y asegura consistencia visual.
+
+2.  **Refactorizar la Lógica de Mapeo de `ApiResult` en ViewModels:**
+    *   **Ubicación:** `AuthViewModel.kt`, `TopicsViewModel.kt`
+    *   **Problema:** El bloque `when` para convertir un `ApiResult` en un `State` se repite en múltiples ViewModels.
+    *   **Solución:** Crea una función de extensión o un método base en un `BaseViewModel` para manejar esta conversión. Por ejemplo: `fun <T> ApiResult<T>.toState(onSuccess: (T) -> State): State`.
+
+3.  **Unificar `StateFlows` en las UI States:**
+    *   **Ubicación:** `ProfileViewModel.kt`
+    *   **Problema:** El ViewModel expone dos `StateFlow` (`_profileState` y `_progressState`). Esto puede llevar a inconsistencias si no se actualizan de forma atómica.
+    *   **Solución:** Combínalos en una única clase de datos `ProfileScreenUiState` que contenga ambos estados. Esto asegura que la pantalla siempre tenga un estado consistente y único.
+
+4.  **Eliminar Datos Hardcodeados en la Lógica de Negocio:**
+    *   **Ubicación:** `conversation/presentation/ConversationViewModel.kt`
+    *   **Problema:** Al crear el `ProgressReport`, se usan valores quemados: `session_date = "..."` y `duration_minutes = 12`.
+    *   **Solución:** Estos valores deben ser dinámicos. La fecha debe ser la actual (`Clock.System.now()`) y la duración debe ser calculada midiendo el tiempo desde que la conversación empieza hasta que termina.
+
+5.  **Usar Enums o Sealed Classes para Eventos en lugar de Strings:**
+    *   **Ubicación:** `conversation/presentation/ConversationViewModel.kt`
+    *   **Problema:** El `handleServerEvent` usa `when` con strings ("output_audio_buffer.started", "response.done"). Esto es propenso a errores de tipeo y difícil de mantener.
+    *   **Solución:** Define una `enum class` o `sealed class` con estos tipos de eventos y deserializa el campo `type` del JSON a esta clase. Esto proporciona seguridad de tipos (type-safety).
+
+6.  **Mejorar el `handleApiResponse`:**
+    *   **Ubicación:** `core/ApiHelpers.kt`
+    *   **Problema:** El helper solo intenta decodificar los errores como `SimpleErrorResponse`. No maneja otros formatos de error definidos, como `ValidationErrorResponse`.
+    *   **Solución:** Haz que el helper sea más inteligente, quizás intentando decodificar varios tipos de error o pasando el `KSerializer` de error como parámetro para ser más flexible.
+
+---
+Espero que esta lista te sea de gran ayuda. Como te decía, la base es excelente y estos puntos son los que distinguen a una buena aplicación de una aplicación profesional, escalable y fácil de mantener.
+
+¡Sigue así!

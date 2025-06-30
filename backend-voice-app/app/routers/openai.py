@@ -64,38 +64,49 @@ TOOLS = [
     {
         "type": "function",
         "name": "generate_final_report",
-        "description": "Genera el informe de rendimiento final. Solo llamar al final.",
+        "description": "Genera un informe de progreso estructurado al finalizar la sesión de tutoría. Debe ser llamado únicamente al concluir la conversación.",
         "parameters": {
             "type": "object",
             "properties": {
-                "overall_score": {"type": "integer"},
-                "summary": {"type": "string"},
-                "strengths": {"type": "array", "items": {"type": "string"}},
-                "areas_for_improvement": {"type": "array", "items": {"type": "string"}},
-                "english_level": {"type": "string"}
-            },
-            "required": [
-                "overall_score",
-                "summary",
-                "strengths",
-                "areas_for_improvement",
-                "english_level"
-            ]
-        }
-    },
-    {
-        "type": "function",
-        "name": "control_flashlight",
-        "description": "Activa o desactiva la linterna del dispositivo.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "is_on": {
-                    "type": "boolean",
-                    "description": "True para encender la linterna, false para apagarla."
+                "ai_summary": {
+                    "type": "string",
+                    "description": "Un resumen detallado del desempeño del usuario en la sesión, destacando logros y errores comunes."
+                },
+                "topics_discussed": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Una lista de los temas principales que se trataron durante la conversación."
+                },
+                "new_vocabulary": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Lista de palabras o frases nuevas que el usuario aprendió o practicó."
+                },
+                "grammar_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "point": {"type": "string", "description": "El concepto gramatical específico, ej: 'Past Simple Tense'."},
+                            "examples": {"type": "array", "items": {"type": "string"}, "description": "Ejemplos de la conversación que ilustran el punto."},
+                            "status": {"type": "string", "description": "Estado del aprendizaje, ej: 'practiced', 'needs_review'."}
+                        },
+                        "required": ["point", "examples", "status"]
+                    },
+                    "description": "Un análisis de los puntos gramaticales clave que se practicaron o corrigieron."
+                },
+                "suggested_level": {
+                    "type": "string",
+                    "description": "El nivel de inglés estimado del usuario basado en esta sesión (ej: A2, B1, B2)."
                 }
             },
-            "required": ["is_on"]
+            "required": [
+                "summary",
+                "topics_discussed",
+                "new_vocabulary",
+                "grammar_points",
+                "suggested_level"
+            ]
         }
     }
 ]
@@ -128,14 +139,6 @@ async def create_ephemeral_key(
             )
             if response.status_code == 200:
                 data = response.json()
-                print("DEBUG: Respuesta de OpenAI ->", data) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("client_secret")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("error")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("status")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("success")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("error")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("status")) # Útil para depurar
-                print("DEBUG: Respuesta de OpenAI ->", data.get("success")) # Útil para depurar
                 client_secret = data.get("client_secret")
                 if client_secret:
                     return {"success": True, "client_secret": client_secret}

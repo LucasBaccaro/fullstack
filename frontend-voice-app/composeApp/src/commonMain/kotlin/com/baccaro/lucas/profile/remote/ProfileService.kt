@@ -12,6 +12,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 
+import com.baccaro.lucas.progress.model.ProgressReport
+import kotlinx.serialization.builtins.ListSerializer
+
 class ProfileService(private val api: KtorApi, private val json: Json) {
     suspend fun getProfile(token: String): ApiResult<Profile> {
         val response = api.client.get("${KtorApi.BASE_URL}profile/me") {
@@ -27,5 +30,12 @@ class ProfileService(private val api: KtorApi, private val json: Json) {
             setBody(profile)
         }
         return handleApiResponse(response, Profile.serializer(), json)
+    }
+
+    suspend fun getProgressHistory(token: String): ApiResult<List<ProgressReport>> {
+        val response = api.client.get("${KtorApi.BASE_URL}progress") {
+            header("Authorization", "Bearer $token")
+        }
+        return handleApiResponse(response, ListSerializer(ProgressReport.serializer()), json)
     }
 }

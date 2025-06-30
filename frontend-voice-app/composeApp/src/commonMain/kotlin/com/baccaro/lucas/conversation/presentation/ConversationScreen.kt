@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import com.baccaro.lucas.progress.model.ProgressReport
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,25 +155,51 @@ fun ConversationScreen(instructions: String) {
     }
 }
 
+
 @Composable
-fun FinalReportCard(report: FinalReport) {
+fun FinalReportCard(report: ProgressReport) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFE3D6F7)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            Text("Informe Final", style = MaterialTheme.typography.titleLarge.copy(color = Color(0xFF2D2A3A)))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Puntuación General: ${report.overall_score}", color = Color(0xFF7B5EA7))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Resumen: ${report.summary}", color = Color(0xFF2D2A3A))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Fortalezas: ${report.strengths.joinToString()}", color = Color(0xFF2D2A3A))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Áreas de Mejora: ${report.areas_for_improvement.joinToString()}", color = Color(0xFF2D2A3A))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Nivel de Inglés: ${report.english_level}", color = Color(0xFF2D2A3A))
+            Text("Informe de Progreso", style = MaterialTheme.typography.titleLarge.copy(color = Color(0xFF2D2A3A)))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Resumen
+            Text("Resumen de la Sesión", style = MaterialTheme.typography.titleMedium)
+            Text(report.ai_summary, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF2D2A3A))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Nivel Sugerido
+            Text("Nivel Sugerido: ${report.suggested_level}", style = MaterialTheme.typography.bodyLarge, color = Color(0xFF7B5EA7))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Puntos de Gramática
+            if (report.grammar_points.isNotEmpty()) {
+                Text("Puntos de Gramática a Revisar", style = MaterialTheme.typography.titleMedium)
+                report.grammar_points.forEach { point ->
+                    Text("• ${point.point} (Estado: ${point.status})", style = MaterialTheme.typography.bodyMedium)
+                    point.examples.forEach { example ->
+                        Text("  - Ejemplo: \"$example\"", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Nuevo Vocabulario
+            if (report.new_vocabulary.isNotEmpty()) {
+                Text("Nuevo Vocabulario", style = MaterialTheme.typography.titleMedium)
+                Text(report.new_vocabulary.joinToString(), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Temas Discutidos
+            if (report.topics_discussed.isNotEmpty()) {
+                Text("Temas Discutidos", style = MaterialTheme.typography.titleMedium)
+                Text(report.topics_discussed.joinToString(), style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }

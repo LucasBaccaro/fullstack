@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import com.baccaro.lucas.progress.model.ProgressReport
+
 sealed class ProfileState {
     object Idle : ProfileState()
     object Loading : ProfileState()
@@ -16,11 +18,29 @@ sealed class ProfileState {
     object Updated : ProfileState()
 }
 
+sealed class ProgressHistoryState {
+    object Loading : ProgressHistoryState()
+    data class Success(val history: List<ProgressReport>) : ProgressHistoryState()
+    data class Error(val message: String) : ProgressHistoryState()
+}
+
 class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewModel() {
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Idle)
     val profileState = _profileState.asStateFlow()
 
-    fun getProfile() {
+    private val _progressState = MutableStateFlow<ProgressHistoryState>(ProgressHistoryState.Loading)
+    val progressState = _progressState.asStateFlow()
+
+    init {
+        loadData()
+    }
+
+    fun loadData() {
+        getProfile()
+        getProgressHistory()
+    }
+
+    private fun getProfile() {
         viewModelScope.launch {
             _profileState.value = ProfileState.Loading
             val result = profileRepository.getProfile()
@@ -31,6 +51,21 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
                 result.networkException != null -> _profileState.value =
                     ProfileState.Error("Error de red: ${result.networkException.message}")
                 else -> _profileState.value = ProfileState.Error("Error desconocido")
+            }
+        }
+    }
+
+    private fun getProgressHistory() {
+        viewModelScope.launch {
+            _progressState.value = ProgressHistoryState.Loading
+            val result = profileRepository.getProgressHistory()
+            when {
+                result.data != null -> _progressState.value = ProgressHistoryState.Success(result.data)
+                result.errorMessage != null -> _progressState.value =
+                    ProgressHistoryState.Error(result.errorMessage)
+                result.networkException != null -> _progressState.value =
+                    ProgressHistoryState.Error("Error de red: ${result.networkException.message}")
+                else -> _progressState.value = ProgressHistoryState.Error("Error desconocido")
             }
         }
     }

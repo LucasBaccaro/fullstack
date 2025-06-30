@@ -9,31 +9,33 @@ import com.baccaro.lucas.conversation.remote.ConversationRepository
 import com.baccaro.lucas.platform.AudioHelper
 import com.baccaro.lucas.platform.BaseInterviewWebRTCClient
 import com.baccaro.lucas.platform.createRtcClient
+import com.baccaro.lucas.progress.model.PartialProgressReport
+import com.baccaro.lucas.progress.model.ProgressReport
+import com.baccaro.lucas.progress.remote.ProgressRepository
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-// DATA CLASSES (deberían estar en su propio archivo de dominio)
+// DATA CLASSES PARA EVENTOS DEL SERVIDOR
 @Serializable
-data class FullServerEvent(val type: String, val response: ResponseObject? = null, val delta: String? = null)
+data class FullServerEvent(
+    val type: String,
+    val response: ResponseObject? = null,
+    val delta: String? = null
+)
+
 @Serializable
 data class ResponseObject(val output: List<OutputObject>? = null)
+
 @Serializable
 data class OutputObject(val type: String, val name: String? = null, val arguments: String? = null)
-@Serializable
-data class FinalReport(
-    val overall_score: Int,
-    val summary: String,
-    val strengths: List<String>,
-    val areas_for_improvement: List<String>,
-    val english_level: String
-)
+
 @Serializable
 data class FlashlightArgs(val is_on: Boolean)
 
 
-// VIEWMODEL STATE & EVENTS
+// ESTADO Y EVENTOS DE LA UI
 sealed class ConnectionState {
     object Idle : ConnectionState()
     object RequestingToken : ConnectionState()
@@ -47,7 +49,7 @@ data class InterviewUiState(
     val statusMessage: String = "Listo para la entrevista.",
     val userPrompt: String = "",
     val hasPermission: Boolean = false,
-    val finalReportData: FinalReport? = null,
+    val finalReportData: ProgressReport? = null,
     val isAiSpeaking: Boolean = false,
     val aiResponseText: String = "",
     val aiFinalTranscript: String = ""
@@ -55,7 +57,9 @@ data class InterviewUiState(
 
 sealed class InterviewEvent {
     data class UpdateUserPrompt(val instructions: String) : InterviewEvent()
-    data class StartOrStopInterview(val platformContext: Any, val instructions: String) : InterviewEvent()
+    data class StartOrStopInterview(val platformContext: Any, val instructions: String) :
+        InterviewEvent()
+
     data class PermissionResult(val isGranted: Boolean) : InterviewEvent()
     object Reset : InterviewEvent()
 }
@@ -63,14 +67,14 @@ sealed class InterviewEvent {
 
 class ConversationViewModel(
     private val repository: ConversationRepository,
+    private val progressRepository: ProgressRepository,
     private val jsonSerializer: Json
 ) : ViewModel() {
-
-    private var audioHelper: AudioHelper? = null
 
     var uiState by mutableStateOf(InterviewUiState())
         private set
 
+    private var audioHelper: AudioHelper? = null
     private var rtcClient: BaseInterviewWebRTCClient? = null
 
     fun onEvent(event: InterviewEvent) {
@@ -78,6 +82,7 @@ class ConversationViewModel(
             is InterviewEvent.UpdateUserPrompt -> {
                 uiState = uiState.copy(userPrompt = event.instructions)
             }
+
             is InterviewEvent.StartOrStopInterview -> {
                 if (uiState.connectionState == ConnectionState.Connected) {
                     stopAndGenerateReport()
@@ -85,6 +90,7 @@ class ConversationViewModel(
                     startInterview(event.platformContext, event.instructions)
                 }
             }
+
             is InterviewEvent.PermissionResult -> {
                 uiState = uiState.copy(hasPermission = event.isGranted)
                 if (!event.isGranted) {
@@ -94,6 +100,7 @@ class ConversationViewModel(
                     )
                 }
             }
+
             is InterviewEvent.Reset -> {
                 cleanupWebRTCResources()
                 uiState = InterviewUiState(hasPermission = uiState.hasPermission)
@@ -146,24 +153,23 @@ class ConversationViewModel(
     }
 
     private fun handleServerEvent(event: FullServerEvent) {
-        println("DEBUG: Evento recibido del servidor -> tipo: ${event.type}")
+        println("DEBUG: Evento recibido del servidor -> tipo: ${event.response}")
         when (event.type) {
             "output_audio_buffer.started" -> {
-                uiState = uiState.copy(isAiSpeaking = true, aiResponseText = "", aiFinalTranscript = "")
+                uiState =
+                    uiState.copy(isAiSpeaking = true, aiResponseText = "", aiFinalTranscript = "")
             }
+
             "output_audio_buffer.stopped" -> {
                 uiState = uiState.copy(isAiSpeaking = false)
             }
+
             "response.audio_transcript.delta" -> {
                 event.delta?.let {
                     uiState = uiState.copy(aiResponseText = uiState.aiResponseText + it)
                 }
             }
-            "response.audio_transcript.done" -> {
-                /*event.delta?.let {
-                    uiState = uiState.copy(aiFinalTranscript = it, aiResponseText = "")
-                }*/
-            }
+
             "response.done" -> handleFunctionCalls(event.response)
         }
     }
@@ -171,6 +177,7 @@ class ConversationViewModel(
     private fun handleFunctionCalls(response: ResponseObject?) {
         val functionCall = response?.output?.firstOrNull { it.type == "function_call" }
         if (functionCall == null) {
+            // Fallback por si la estructura cambia o no es un "function_call" directo
             response?.output?.firstOrNull { it.name == "generate_final_report" }?.let {
                 handleFinalReportCall(it.arguments)
             }
@@ -191,18 +198,40 @@ class ConversationViewModel(
         println("Informe final detectado. Argumentos: $argumentsJson")
         viewModelScope.launch {
             try {
-                val report = jsonSerializer.decodeFromString<FinalReport>(argumentsJson)
-                uiState = uiState.copy(
-                    finalReportData = report,
-                    statusMessage = "Informe final generado.",
-                    connectionState = ConnectionState.Idle,
-                    isAiSpeaking = false
+                val partial = jsonSerializer.decodeFromString<PartialProgressReport>(argumentsJson)
+                // 3. Crea el ProgressReport completo
+                val report = ProgressReport(
+                    session_date = "2025-06-30T15:34:08.850Z",
+                    duration_minutes = 12,
+                    topics_discussed = partial.topics_discussed,
+                    new_vocabulary = partial.new_vocabulary,
+                    grammar_points = partial.grammar_points,
+                    ai_summary = partial.ai_summary,
+                    suggested_level = partial.suggested_level
                 )
+
+                val result = progressRepository.saveProgress(report)
+                if (result.data != null) {
+                    println("Éxito: El informe de progreso se guardó correctamente en el backend.")
+                    uiState = uiState.copy(
+                        finalReportData = report,
+                        statusMessage = "Informe final generado.",
+                        connectionState = ConnectionState.Idle,
+                        isAiSpeaking = false
+                    )
+                } else {
+                    uiState = uiState.copy(
+                        statusMessage = "No se pudo guardar el informe de progreso. Intenta nuevamente.",
+                        connectionState = ConnectionState.Idle,
+                        isAiSpeaking = false
+                    )
+                }
             } catch (e: Exception) {
                 uiState = uiState.copy(
-                    statusMessage = "Error al procesar el informe.",
+                    statusMessage = "Error al procesar el informe: ${e.message}",
                     connectionState = ConnectionState.Idle
                 )
+                e.printStackTrace()
             } finally {
                 cleanupWebRTCResources()
             }
@@ -221,7 +250,8 @@ class ConversationViewModel(
         if (result.data != null) {
             return result.data.client_secret.value
         } else {
-            val error = result.errorMessage ?: result.networkException?.message ?: "Error desconocido"
+            val error =
+                result.errorMessage ?: result.networkException?.message ?: "Error desconocido"
             throw IOException("Fallo al obtener token: $error")
         }
     }

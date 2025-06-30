@@ -19,6 +19,9 @@ import com.baccaro.lucas.conversation.remote.ConversationService
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
+import com.baccaro.lucas.progress.remote.ProgressRepository
+import com.baccaro.lucas.progress.remote.ProgressService
+
 val appModule = module {
     single { Settings() }
     single<KtorApi> { KtorApiImpl() }
@@ -33,6 +36,8 @@ val appModule = module {
     singleOf(::AuthViewModel)
     single { ConversationService(get(), get()) }
     single { ConversationRepository(get(), get()) }
-    single { ConversationViewModel(get(), get()) } 
+    single { ProgressService(get(),get()) }
+    single { ProgressRepository(get(),get())}
+    singleOf(::ConversationViewModel)
     single { Json { ignoreUnknownKeys = true } }
 }

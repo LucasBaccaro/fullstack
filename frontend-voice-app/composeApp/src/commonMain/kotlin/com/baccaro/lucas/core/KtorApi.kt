@@ -9,7 +9,7 @@ interface KtorApi {
     val client: HttpClient
 
     companion object {
-        const val BASE_URL = "https://8131-181-116-177-35.ngrok-free.app/"
+        const val BASE_URL = "https://f3ea-181-116-177-35.ngrok-free.app/"
     }
 }
 

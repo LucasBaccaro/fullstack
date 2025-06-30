@@ -57,11 +57,17 @@ actual fun createRtcClient(
 ): BaseInterviewWebRTCClient = AndroidInterviewWebRTCClient(context, ephemeralKey, onServerEvent)
 
 actual class AudioHelper actual constructor(context: Any) {
-    private val audioManager = (context as Context).getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val audioManager =
+        (context as Context).getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     actual fun setSpeakerphoneOn(isOn: Boolean) {
-        if (audioManager.isSpeakerphoneOn == isOn) return
         audioManager.isSpeakerphoneOn = isOn
+        if (isOn) {
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        } else {
+            // Al apagarlo, volver al modo normal es una buena práctica
+            audioManager.mode = AudioManager.MODE_NORMAL
+        }
         Log.d("AudioHelper", "Speakerphone is now ${if (isOn) "ON" else "OFF"}")
     }
 }
