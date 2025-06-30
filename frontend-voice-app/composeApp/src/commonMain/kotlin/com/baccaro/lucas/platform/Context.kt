@@ -14,3 +14,7 @@ expect fun createRtcClient(
     ephemeralKey: String,
     onServerEvent: (FullServerEvent) -> Unit
 ): BaseInterviewWebRTCClient
+
+expect class AudioHelper(context: Any) {
+    fun setSpeakerphoneOn(isOn: Boolean)
+}

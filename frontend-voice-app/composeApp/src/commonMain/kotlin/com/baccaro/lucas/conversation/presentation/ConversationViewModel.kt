@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.baccaro.lucas.conversation.remote.ConversationRepository
+import com.baccaro.lucas.platform.AudioHelper
 import com.baccaro.lucas.platform.BaseInterviewWebRTCClient
 import com.baccaro.lucas.platform.createRtcClient
 import kotlinx.coroutines.launch
@@ -65,6 +66,8 @@ class ConversationViewModel(
     private val jsonSerializer: Json
 ) : ViewModel() {
 
+    private var audioHelper: AudioHelper? = null
+
     var uiState by mutableStateOf(InterviewUiState())
         private set
 
@@ -103,6 +106,7 @@ class ConversationViewModel(
             uiState = uiState.copy(statusMessage = "Por favor, concede los permisos necesarios.")
             return
         }
+        audioHelper = AudioHelper(platformContext)
 
         viewModelScope.launch {
             uiState = uiState.copy(
@@ -110,14 +114,15 @@ class ConversationViewModel(
                 statusMessage = "Obteniendo token de sesión..."
             )
             try {
-                val ephemeralKey = fetchEphemeralKey(instructions) // <-- USA EL PROMPT DEL PARÁMETRO
+                val ephemeralKey = fetchEphemeralKey(instructions)
                 uiState = uiState.copy(
                     connectionState = ConnectionState.Connecting,
                     statusMessage = "Conectando a la entrevista..."
                 )
 
                 rtcClient = createRtcClient(platformContext, ephemeralKey, ::handleServerEvent)
-                rtcClient?.connect() // Es suspend
+                rtcClient?.connect()
+                audioHelper?.setSpeakerphoneOn(true)
 
                 uiState = uiState.copy(
                     connectionState = ConnectionState.Connected,
@@ -206,6 +211,7 @@ class ConversationViewModel(
 
     private fun cleanupWebRTCResources() {
         println("Limpiando recursos de WebRTC...")
+        audioHelper?.setSpeakerphoneOn(false)
         rtcClient?.disconnect()
         rtcClient = null
     }

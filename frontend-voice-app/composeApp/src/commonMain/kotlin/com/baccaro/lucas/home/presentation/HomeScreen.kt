@@ -1,5 +1,7 @@
 package com.baccaro.lucas.home.presentation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -11,89 +13,80 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.navigation.NavController
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateDetail: (String) -> Unit,viewModel: TopicsViewModel, modifier: Modifier = Modifier) {
+fun HomeScreen(onNavigateDetail: (String) -> Unit, viewModel: TopicsViewModel, modifier: Modifier = Modifier) {
     val topicsState by viewModel.topicsState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.getTopics()
-    }
-
+    LaunchedEffect(Unit) { viewModel.getTopics() }
     Scaffold(
+        containerColor = Color(0xFFF6F4F9),
         topBar = {
             TopAppBar(
-                title = { Text("Temas disponibles") },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO: menú o logout */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                title = { Text("Temas", fontSize = 32.sp, color = Color(0xFF2D2A3A)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(24.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (val state = topicsState) {
                 is TopicsState.Loading -> {
                     Spacer(modifier = Modifier.height(32.dp))
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color(0xFF7B5EA7))
                 }
-
                 is TopicsState.Error -> {
                     Spacer(modifier = Modifier.height(32.dp))
-                    Text(state.message, color = MaterialTheme.colorScheme.error)
+                    AssistChip(
+                        onClick = {},
+                        label = { Text(state.message, color = Color.White) },
+                        colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFF7B5EA7))
+                    )
                 }
-
                 is TopicsState.Success -> {
                     if (state.topics.isEmpty()) {
                         Spacer(modifier = Modifier.height(32.dp))
                         Text(
                             "No hay temas disponibles.",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge.copy(color = Color(0xFF7B5EA7))
                         )
                     } else {
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(18.dp)
                         ) {
                             state.topics.forEach { topic ->
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(18.dp))
                                         .clickable { onNavigateDetail(topic.prompt_context) },
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                        containerColor = Color.White
                                     ),
-                                    elevation = CardDefaults.cardElevation(4.dp)
+                                    elevation = CardDefaults.cardElevation(0.dp)
                                 ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
+                                    Column(modifier = Modifier.padding(24.dp)) {
                                         Text(
                                             topic.title,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF2D2A3A)
                                             )
                                         )
                                         topic.description?.let {
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(it, style = MaterialTheme.typography.bodyMedium)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(it, style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF7B5EA7)))
                                         }
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.height(12.dp))
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             DifficultyChip(topic.difficulty_level)
                                         }
@@ -103,7 +96,6 @@ fun HomeScreen(onNavigateDetail: (String) -> Unit,viewModel: TopicsViewModel, mo
                         }
                     }
                 }
-
                 else -> {}
             }
         }
@@ -116,18 +108,18 @@ fun DifficultyChip(level: String?) {
         "easy", "facil" -> Color(0xFFB9F6CA)
         "medium", "medio" -> Color(0xFFFFF59D)
         "hard", "dificil" -> Color(0xFFFF8A80)
-        else -> MaterialTheme.colorScheme.secondaryContainer
+        else -> Color(0xFFE3D6F7)
     }
     Surface(
         color = color,
         shape = RoundedCornerShape(50),
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
         modifier = Modifier.padding(end = 8.dp)
     ) {
         Text(
             text = "Dificultad: ${level ?: "-"}",
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelMedium
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelLarge.copy(color = Color(0xFF2D2A3A))
         )
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,27 +26,20 @@ fun SignUpScreen(viewModel: AuthViewModel, onSignUpSuccess: () -> Unit) {
     val isLoading = authState is AuthState.Loading
 
     DisposableEffect(Unit) {
-        onDispose {
-            viewModel.reset()
-        }
+        onDispose { viewModel.reset() }
     }
-
     LaunchedEffect(authState) {
-        if (authState is AuthState.Success) {
-            onSignUpSuccess()
-        }
+        if (authState is AuthState.Success) onSignUpSuccess()
     }
 
     Scaffold(
+        containerColor = Color(0xFFF6F4F9),
         topBar = {
             TopAppBar(
-                title = { Text("Crear cuenta") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                title = { Text("Crear cuenta", fontSize = 32.sp, color = Color(0xFF2D2A3A)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -53,70 +47,86 @@ fun SignUpScreen(viewModel: AuthViewModel, onSignUpSuccess: () -> Unit) {
                 .padding(padding),
             contentAlignment = Alignment.Center
         ) {
-            Card(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth(0.92f)
-                    .padding(8.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE3D6F7)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(40.dp))
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                        enabled = !isLoading,
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                    Icon(Icons.Default.PersonAdd, contentDescription = null, tint = Color(0xFF7B5EA7), modifier = Modifier.size(44.dp))
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email", color = Color(0xFF7B5EA7)) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF7B5EA7)) },
+                    enabled = !isLoading,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF7B5EA7),
+                        unfocusedBorderColor = Color(0xFFE3D6F7)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                        enabled = !isLoading,
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña", color = Color(0xFF7B5EA7)) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF7B5EA7)) },
+                    enabled = !isLoading,
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF7B5EA7),
+                        unfocusedBorderColor = Color(0xFFE3D6F7)
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Button(
-                        onClick = { viewModel.signUp(email, password) },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                        } else {
-                            Text("Registrarse")
-                        }
+                )
+                Spacer(modifier = Modifier.height(28.dp))
+                Button(
+                    onClick = { viewModel.signUp(email, password) },
+                    enabled = !isLoading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B5EA7))
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Text("Registrarse", fontSize = 18.sp, color = Color.White)
                     }
-                    when (val state = authState) {
-                        is AuthState.Error -> {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(state.message, color = MaterialTheme.colorScheme.error)
-                        }
-                        is AuthState.Success -> {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("¡Registro exitoso!", color = MaterialTheme.colorScheme.primary)
-                        }
-                        else -> {}
+                }
+                when (val state = authState) {
+                    is AuthState.Error -> {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(state.message, color = Color.White) },
+                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White) },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFF7B5EA7))
+                        )
                     }
+                    is AuthState.Success -> {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("¡Registro exitoso!", color = Color.White) },
+                            leadingIcon = { Icon(Icons.Default.PersonAdd, contentDescription = null, tint = Color.White) },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFF7B5EA7))
+                        )
+                    }
+                    else -> {}
                 }
             }
         }

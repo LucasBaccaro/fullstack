@@ -13,7 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.baccaro.lucas.profile.domain.Profile
 import org.koin.compose.koinInject
 
@@ -26,20 +28,16 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     var showEdit by remember { mutableStateOf(false) }
     var showSuccess by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.getProfile()
-    }
+    LaunchedEffect(Unit) { viewModel.getProfile() }
 
     Scaffold(
+        containerColor = Color(0xFFF6F4F9),
         topBar = {
             TopAppBar(
-                title = { Text("Perfil") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                title = { Text("Perfil", fontSize = 32.sp, color = Color(0xFF2D2A3A)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -50,60 +48,69 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 when (val state = profileState) {
                     is ProfileState.Loading -> {
                         Spacer(modifier = Modifier.height(32.dp))
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = Color(0xFF7B5EA7))
                     }
                     is ProfileState.Error -> {
                         Spacer(modifier = Modifier.height(32.dp))
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(state.message, color = Color.White) },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFF7B5EA7))
+                        )
                     }
                     is ProfileState.Success -> {
                         val profile = state.profile
                         if (!showEdit) {
                             Card(
                                 modifier = Modifier.fillMaxWidth(0.98f),
-                                elevation = CardDefaults.cardElevation(6.dp)
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(0.dp)
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(24.dp),
+                                    modifier = Modifier.padding(32.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(72.dp)
+                                            .size(80.dp)
                                             .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                            .background(Color(0xFFE3D6F7)),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+                                        Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF7B5EA7), modifier = Modifier.size(48.dp))
                                     }
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Text("${profile.name ?: "Sin nombre"}", style = MaterialTheme.typography.titleLarge)
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(18.dp))
+                                    Text("${profile.name ?: "Sin nombre"}", style = MaterialTheme.typography.titleLarge.copy(color = Color(0xFF2D2A3A)))
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
+                                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color(0xFF7B5EA7))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("${profile.id}", style = MaterialTheme.typography.bodyMedium)
+                                        Text("${profile.id}", style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF7B5EA7)))
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Translate, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
+                                        Icon(Icons.Default.Translate, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color(0xFF7B5EA7))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Nivel de inglés: ${profile.english_level ?: "-"}", style = MaterialTheme.typography.bodyMedium)
+                                        Text("Nivel de inglés: ${profile.english_level ?: "-"}", style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF7B5EA7)))
                                     }
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(22.dp))
                                     Button(onClick = {
                                         editableProfile = profile
                                         showEdit = true
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = null)
+                                    },
+                                        shape = CircleShape,
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B5EA7)),
+                                        modifier = Modifier.height(48.dp)
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Editar perfil")
+                                        Text("Editar perfil", color = Color.White)
                                     }
                                 }
                             }
@@ -112,41 +119,54 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                             var englishLevel by remember { mutableStateOf(profile.english_level ?: "") }
                             Card(
                                 modifier = Modifier.fillMaxWidth(0.98f),
-                                elevation = CardDefaults.cardElevation(6.dp)
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(0.dp)
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(24.dp),
+                                    modifier = Modifier.padding(32.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     OutlinedTextField(
                                         value = name,
                                         onValueChange = { name = it },
-                                        label = { Text("Nombre") },
-                                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                                        label = { Text("Nombre", color = Color(0xFF7B5EA7)) },
+                                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF7B5EA7)) },
                                         singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF7B5EA7),
+                                            unfocusedBorderColor = Color(0xFFE3D6F7)
+                                        )
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     OutlinedTextField(
                                         value = englishLevel,
                                         onValueChange = { englishLevel = it },
-                                        label = { Text("Nivel de inglés") },
-                                        leadingIcon = { Icon(Icons.Default.Translate, contentDescription = null) },
+                                        label = { Text("Nivel de inglés", color = Color(0xFF7B5EA7)) },
+                                        leadingIcon = { Icon(Icons.Default.Translate, contentDescription = null, tint = Color(0xFF7B5EA7)) },
                                         singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF7B5EA7),
+                                            unfocusedBorderColor = Color(0xFFE3D6F7)
+                                        )
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(22.dp))
                                     Row {
                                         Button(onClick = {
                                             viewModel.updateProfile(profile.copy(name = name, english_level = englishLevel))
                                             showEdit = false
                                             showSuccess = true
-                                        }) {
-                                            Text("Guardar")
+                                        },
+                                            shape = CircleShape,
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B5EA7)),
+                                            modifier = Modifier.height(44.dp)
+                                        ) {
+                                            Text("Guardar", color = Color.White)
                                         }
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        OutlinedButton(onClick = { showEdit = false }) {
-                                            Text("Cancelar")
+                                        OutlinedButton(onClick = { showEdit = false }, shape = CircleShape) {
+                                            Text("Cancelar", color = Color(0xFF7B5EA7))
                                         }
                                     }
                                 }
@@ -155,20 +175,13 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                     }
                     is ProfileState.Updated -> {
                         if (showSuccess) {
-                            Snackbar(
-                                modifier = Modifier.padding(8.dp),
-                                action = {
-                                    TextButton(onClick = { showSuccess = false }) {
-                                        Text("OK")
-                                    }
-                                }
-                            ) {
-                                Text("Perfil actualizado correctamente")
-                            }
+                            AssistChip(
+                                onClick = { showSuccess = false },
+                                label = { Text("Perfil actualizado correctamente", color = Color.White) },
+                                colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFF7B5EA7))
+                            )
                         }
-                        LaunchedEffect(Unit) {
-                            viewModel.getProfile()
-                        }
+                        LaunchedEffect(Unit) { viewModel.getProfile() }
                     }
                     else -> {}
                 }

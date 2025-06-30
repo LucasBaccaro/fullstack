@@ -1,7 +1,10 @@
 package com.baccaro.lucas.platform
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -52,3 +55,13 @@ actual fun createRtcClient(
     ephemeralKey: String,
     onServerEvent: (FullServerEvent) -> Unit
 ): BaseInterviewWebRTCClient = AndroidInterviewWebRTCClient(context, ephemeralKey, onServerEvent)
+
+actual class AudioHelper actual constructor(context: Any) {
+    private val audioManager = (context as Context).getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    actual fun setSpeakerphoneOn(isOn: Boolean) {
+        if (audioManager.isSpeakerphoneOn == isOn) return
+        audioManager.isSpeakerphoneOn = isOn
+        Log.d("AudioHelper", "Speakerphone is now ${if (isOn) "ON" else "OFF"}")
+    }
+}
